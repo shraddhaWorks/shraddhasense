@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum LeaveType {
+  HALF_DAY
+  FULL_DAY
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String
+  username      String          @unique
+  passwordHash  String
+  role          Role            @default(EMPLOYEE)
+  monthlySalary Decimal         @db.Decimal(12, 2)
+  adminId       String?
+  admin         User?           @relation("AdminEmployees", fields: [adminId], references: [id])
+  employees     User[]          @relation("AdminEmployees")
+  sessions      Session[]
+  accounts      Account[]
+  attendances   Attendance[]
+  leaves        Leave[]
+  salaryCredits SalaryCredit[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Attendance {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workDate         DateTime
+  punchInAt        DateTime
+  punchInLocation  String
+  punchOutAt       DateTime?
+  punchOutLocation String?
+  note             String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, workDate])
+}
+
+model Leave {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaveDate DateTime
+  type      LeaveType
+  note      String?
+  createdAt DateTime  @default(now())
+}
+
+model SalaryCredit {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month          Int
+  year           Int
+  baseAmount     Decimal  @db.Decimal(12, 2)
+  leaveDeduction Decimal  @db.Decimal(12, 2)
+  netAmount      Decimal  @db.Decimal(12, 2)
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, month, year])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
