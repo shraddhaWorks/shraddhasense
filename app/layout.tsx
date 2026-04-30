@@ -30,8 +30,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <header className="border-b border-orange-200 bg-white">
-          <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-3 md:px-10">
-            <Image src="/logo.svg" alt="Company logo" width={116} height={116} priority />
+          <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 md:px-10">
+            <Image src="/logo.svg" alt="Company logo" width={44} height={44} priority />
             <p className="text-sm font-semibold text-orange-900">
               Attendance and Salary Manager
             </p>

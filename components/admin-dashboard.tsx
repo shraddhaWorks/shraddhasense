@@ -56,9 +56,9 @@ export function AdminDashboard({ userName }: { userName: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold">Welcome, {userName} (Admin)</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/admin/accounts"
             className="rounded-md border border-orange-300 px-3 py-1 text-sm text-orange-700"
@@ -95,7 +95,7 @@ export function AdminDashboard({ userName }: { userName: string }) {
       <AdminCreateEmployeeForm onCreated={() => void loadOverview()} />
 
       <div className="rounded-lg border border-orange-200 bg-white p-4">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-medium text-orange-900">
             Date-wise Attendance (Punch Time and Location)
           </p>
@@ -108,10 +108,10 @@ export function AdminDashboard({ userName }: { userName: string }) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
+          <table className="min-w-full text-left text-xs sm:text-sm">
             <thead className="bg-orange-100 text-orange-900">
               <tr>
-                <th className="px-3 py-2">Employee</th>
+                <th className="px-3 py-2 whitespace-nowrap">Employee</th>
                 <th className="px-3 py-2">Punch In Time</th>
                 <th className="px-3 py-2">Punch In Location</th>
                 <th className="px-3 py-2">Punch Out Time</th>

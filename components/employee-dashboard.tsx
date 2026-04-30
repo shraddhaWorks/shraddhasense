@@ -124,7 +124,7 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold">Welcome, {userName} (Employee)</h2>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
@@ -134,7 +134,7 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
         <button
           className="rounded border border-orange-300 px-3 py-2 text-sm text-orange-800"
           onClick={async () => {
@@ -145,7 +145,7 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
         </button>
         {canPunchIn ? (
           <button
-            className="rounded bg-orange-500 px-3 py-2 text-sm text-white hover:bg-orange-600"
+            className="rounded bg-orange-500 px-3 py-2 text-sm text-white hover:bg-orange-600 sm:w-auto"
             onClick={async () => {
               const liveCoords = coords ?? (await detectLocation());
               if (!liveCoords) return;
@@ -165,7 +165,7 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
         ) : null}
         {canPunchOut ? (
           <button
-            className="rounded border border-orange-300 px-3 py-2 text-sm text-orange-800"
+            className="rounded border border-orange-300 px-3 py-2 text-sm text-orange-800 sm:w-auto"
             onClick={async () => {
               const liveCoords = coords ?? (await detectLocation());
               if (!liveCoords) return;
@@ -236,7 +236,7 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
             </p>
             <iframe
               title="Current location map"
-              className="mt-3 h-64 w-full rounded border border-orange-100"
+              className="mt-3 h-52 w-full rounded border border-orange-100 sm:h-64"
               src={`https://maps.google.com/maps?q=${coords.lat},${coords.lng}&z=15&output=embed`}
             />
           </>

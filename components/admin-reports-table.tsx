@@ -80,12 +80,12 @@ export function AdminReportsTable() {
 
   return (
     <div className="space-y-4 rounded-lg border border-orange-200 bg-white p-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search employee name or username"
-          className="min-w-60 rounded border border-orange-200 px-3 py-2 text-sm"
+          className="w-full rounded border border-orange-200 px-3 py-2 text-sm sm:min-w-60 sm:w-auto"
         />
         <input
           value={month}
@@ -93,26 +93,26 @@ export function AdminReportsTable() {
           type="number"
           min={1}
           max={12}
-          className="w-24 rounded border border-orange-200 px-3 py-2 text-sm"
+          className="w-full rounded border border-orange-200 px-3 py-2 text-sm sm:w-24"
         />
         <input
           value={year}
           onChange={(e) => setYear(Number(e.target.value))}
           type="number"
           min={2020}
-          className="w-28 rounded border border-orange-200 px-3 py-2 text-sm"
+          className="w-full rounded border border-orange-200 px-3 py-2 text-sm sm:w-28"
         />
         <a
           href={`data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`}
           download={`employee-report-${year}-${month}.csv`}
-          className="rounded bg-orange-500 px-3 py-2 text-sm text-white hover:bg-orange-600"
+          className="rounded bg-orange-500 px-3 py-2 text-center text-sm text-white hover:bg-orange-600"
         >
           Export CSV
         </a>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
+        <table className="min-w-full text-left text-xs sm:text-sm">
           <thead className="bg-orange-100 text-orange-900">
             <tr>
               <th className="px-3 py-2">Employee</th>

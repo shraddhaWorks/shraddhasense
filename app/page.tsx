@@ -21,7 +21,7 @@ export default async function Home({
   const session = await getServerSession(authOptions);
 
   return (
-    <main className="mx-auto w-full max-w-5xl p-6 md:p-10">
+    <main className="mx-auto w-full max-w-5xl p-4 sm:p-6 md:p-10">
       <h1 className="text-2xl font-semibold text-orange-900">Attendance and Salary Manager</h1>
       <p className="mt-2 text-sm text-orange-800">
         Admin can create employee accounts, view attendance, leaves, punch in/out
