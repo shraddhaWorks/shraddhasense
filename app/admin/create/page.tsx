@@ -11,18 +11,20 @@ export default async function AdminCreatePage() {
   if (session.user.role !== "ADMIN") redirect("/");
 
   return (
-    <main className="mx-auto w-full max-w-4xl p-6 md:p-10">
-      <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-orange-900">Create Employee Account</h1>
-        <div className="flex items-center gap-3 text-sm">
-          <Link href="/admin/accounts" className="text-orange-700 underline">
-            Accounts Table
+    <main className="app-main mx-auto w-full min-w-0 max-w-4xl px-4 pb-12 pt-4 sm:px-6 sm:pb-14 sm:pt-6 md:px-8 md:pb-16 md:pt-8 lg:px-10 xl:max-w-5xl xl:px-12">
+      <div className="mb-6 flex flex-col gap-5 sm:mb-8 md:flex-row md:items-start md:justify-between">
+        <h1 className="page-heading text-xl font-bold leading-tight sm:text-2xl md:text-3xl">
+          Create employee
+        </h1>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
+          <Link href="/admin/accounts" className="link-app inline-flex min-h-10 items-center text-sm sm:text-base">
+            Accounts
           </Link>
-          <Link href="/admin/employees" className="text-orange-700 underline">
-            Employees Table
+          <Link href="/admin/employees" className="link-app inline-flex min-h-10 items-center text-sm sm:text-base">
+            Employees
           </Link>
-          <Link href="/" className="text-orange-700 underline">
-            Back to dashboard
+          <Link href="/" className="link-app inline-flex min-h-10 items-center text-sm sm:text-base">
+            ← Dashboard
           </Link>
         </div>
       </div>

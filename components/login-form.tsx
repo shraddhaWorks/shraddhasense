@@ -9,7 +9,7 @@ export function LoginForm() {
 
   return (
     <form
-      className="mt-4 grid gap-3 max-w-md"
+      className="mx-auto mt-4 grid w-full max-w-md gap-3 sm:max-w-lg sm:gap-4 lg:max-w-xl"
       onSubmit={async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -37,22 +37,23 @@ export function LoginForm() {
         required
         name="username"
         placeholder="Username"
-        className="rounded-md border border-orange-200 bg-white px-3 py-2 text-sm"
+        className="input-app w-full"
       />
       <input
         required
         name="password"
         type="password"
         placeholder="Password"
-        className="rounded-md border border-orange-200 bg-white px-3 py-2 text-sm"
+        className="input-app w-full"
       />
       <button
+        type="submit"
         disabled={loading}
-        className="rounded-md bg-orange-500 px-3 py-2 text-sm text-white hover:bg-orange-600 disabled:opacity-60"
+        className="btn-primary w-full"
       >
         {loading ? "Signing in..." : "Sign in"}
       </button>
-      {error ? <p className="text-sm text-orange-900">{error}</p> : null}
+      {error ? <p className="text-sm font-medium text-orange-400">{error}</p> : null}
     </form>
   );
 }

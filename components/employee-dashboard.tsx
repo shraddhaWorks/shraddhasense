@@ -123,29 +123,34 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl font-semibold">Welcome, {userName} (Employee)</h2>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="page-heading text-lg font-bold leading-snug sm:text-xl">
+          Welcome, <span className="text-orange-300/95">{userName}</span>
+        </h2>
         <button
+          type="button"
           onClick={() => signOut({ callbackUrl: "/" })}
-          className="rounded-md border border-orange-300 px-3 py-1 text-sm text-orange-700"
+          className="btn-outline min-h-12 w-full shrink-0 sm:w-auto"
         >
           Logout
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+      <div className="mx-auto grid w-full max-w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-3 xl:max-w-4xl">
         <button
-          className="rounded border border-orange-300 px-3 py-2 text-sm text-orange-800"
+          type="button"
+          className="btn-outline min-h-12 w-full px-4 py-2.5 text-sm sm:text-base"
           onClick={async () => {
             await detectLocation();
           }}
         >
-          {locLoading ? "Detecting location..." : "Refresh Current Location"}
+          {locLoading ? "Detecting location…" : "Refresh location"}
         </button>
         {canPunchIn ? (
           <button
-            className="rounded bg-orange-500 px-3 py-2 text-sm text-white hover:bg-orange-600 sm:w-auto"
+            type="button"
+            className="btn-primary min-h-12 w-full px-4 py-2.5 text-sm sm:text-base"
             onClick={async () => {
               const liveCoords = coords ?? (await detectLocation());
               if (!liveCoords) return;
@@ -165,7 +170,8 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
         ) : null}
         {canPunchOut ? (
           <button
-            className="rounded border border-orange-300 px-3 py-2 text-sm text-orange-800 sm:w-auto"
+            type="button"
+            className="btn-outline min-h-12 w-full px-4 py-2.5 text-sm sm:text-base"
             onClick={async () => {
               const liveCoords = coords ?? (await detectLocation());
               if (!liveCoords) return;
@@ -184,50 +190,53 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
           </button>
         ) : null}
         <button
-          className="rounded border border-orange-300 px-3 py-2 text-sm text-orange-800"
+          type="button"
+          className="btn-outline min-h-12 w-full px-4 py-2.5 text-sm sm:text-base"
           onClick={async () => {
             await requestLeave("HALF_DAY");
           }}
         >
-          Add Half-Day Leave
+          Half-day leave
         </button>
         <button
-          className="rounded border border-orange-300 px-3 py-2 text-sm text-orange-800"
+          type="button"
+          className="btn-outline min-h-12 w-full px-4 py-2.5 text-sm sm:text-base"
           onClick={async () => {
             await requestLeave("FULL_DAY");
           }}
         >
-          Add Full-Day Leave
+          Full-day leave
         </button>
       </div>
 
-      <div className="rounded-lg border border-orange-200 bg-white p-4">
-        <p className="font-medium text-orange-900">Current Punch Location</p>
-        <p className="mt-1 text-sm text-orange-800">
-          Shift Time: {summary?.shift.start ?? "10:00 AM"} to {summary?.shift.end ?? "6:30 PM"}
+      <div className="surface-card rounded-2xl p-4 sm:p-5">
+        <p className="text-base font-semibold text-zinc-100 sm:text-lg">Location & shift</p>
+        <p className="text-app-muted mt-2 text-sm leading-relaxed">
+          Shift: {summary?.shift.start ?? "10:00 AM"} – {summary?.shift.end ?? "6:30 PM"}
         </p>
         {summary?.todayAttendance ? (
-          <p className="mt-1 text-sm text-orange-800">
-            Today: punched in at {new Date(summary.todayAttendance.punchInAt).toLocaleTimeString()}
+          <p className="text-app-muted mt-2 text-sm leading-relaxed">
+            Today: in at {new Date(summary.todayAttendance.punchInAt).toLocaleTimeString()}
             {summary.todayAttendance.punchOutAt
-              ? ` and punched out at ${new Date(summary.todayAttendance.punchOutAt).toLocaleTimeString()}`
-              : ", punch out pending"}
+              ? ` · out at ${new Date(summary.todayAttendance.punchOutAt).toLocaleTimeString()}`
+              : " · punch out pending"}
           </p>
         ) : (
-          <p className="mt-1 text-sm text-orange-800">Today: not punched in yet</p>
+          <p className="text-app-muted mt-2 text-sm">Today: not punched in yet.</p>
         )}
         {coords ? (
           <>
-            <p className="mt-1 text-sm">
-              Latitude: {coords.lat.toFixed(6)} | Longitude: {coords.lng.toFixed(6)}
+            <p className="mt-3 break-all text-sm text-zinc-400">
+              <span className="text-zinc-500">Lat</span> {coords.lat.toFixed(6)}{" "}
+              <span className="text-zinc-500">· Lng</span> {coords.lng.toFixed(6)}
             </p>
-            <p className="mt-1 text-sm">
-              Office center: {officeCenter.lat.toFixed(6)}, {officeCenter.lng.toFixed(6)} | Radius:{" "}
+            <p className="mt-2 break-words text-xs text-zinc-500 sm:text-sm">
+              Office: {officeCenter.lat.toFixed(4)}, {officeCenter.lng.toFixed(4)} · Radius{" "}
               {officeRadiusKm} km
             </p>
             <p
-              className={`mt-1 text-sm font-medium ${
-                inOfficeArea ? "text-orange-700" : "text-orange-900"
+              className={`mt-2 text-sm font-medium ${
+                inOfficeArea ? "text-orange-400" : "text-zinc-200"
               }`}
             >
               {inOfficeArea
@@ -236,26 +245,41 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
             </p>
             <iframe
               title="Current location map"
-              className="mt-3 h-52 w-full rounded border border-orange-100 sm:h-64"
+              className="mt-4 aspect-[16/10] w-full max-h-[min(18rem,50vh)] rounded-2xl border border-zinc-700 shadow-lg transition-all duration-300 hover:border-orange-500/50 sm:max-h-72"
               src={`https://maps.google.com/maps?q=${coords.lat},${coords.lng}&z=15&output=embed`}
             />
           </>
         ) : (
-          <p className="mt-1 text-sm text-orange-700">
-            {locLoading ? "Detecting current location..." : "Location not available yet."}
+          <p className="text-app-muted mt-3 text-sm">
+            {locLoading ? "Detecting current location…" : "Location not available yet."}
           </p>
         )}
-        {locError ? <p className="mt-1 text-sm text-orange-900">{locError}</p> : null}
+        {locError ? <p className="mt-3 text-sm font-medium text-orange-400">{locError}</p> : null}
       </div>
 
       {summary && (
-        <div className="rounded-lg border border-orange-200 bg-white p-4">
-          <p>Attendance days: {summary.attendanceCount}</p>
-          <p>Attendance streak: {summary.streak}</p>
-          <p>Leaves (full/half): {summary.leaves.fullDay}/{summary.leaves.halfDay}</p>
-          <p>Salary base: {summary.salary.base}</p>
-          <p>Salary deduction: {summary.salary.deduction}</p>
-          <p>Salary net: {summary.salary.net}</p>
+        <div className="surface-card space-y-2 rounded-2xl p-4 text-sm text-zinc-400 sm:p-5 sm:text-base">
+          <p>
+            Attendance days: <span className="text-zinc-100">{summary.attendanceCount}</span>
+          </p>
+          <p>
+            Streak: <span className="text-zinc-100">{summary.streak}</span>
+          </p>
+          <p>
+            Leaves (full/half):{" "}
+            <span className="text-zinc-100">
+              {summary.leaves.fullDay}/{summary.leaves.halfDay}
+            </span>
+          </p>
+          <p>
+            Salary base: <span className="text-zinc-100">{summary.salary.base}</span>
+          </p>
+          <p>
+            Deduction: <span className="text-orange-300/90">{summary.salary.deduction}</span>
+          </p>
+          <p>
+            Net: <span className="text-lg font-semibold text-orange-400">{summary.salary.net}</span>
+          </p>
         </div>
       )}
     </div>

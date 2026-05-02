@@ -25,3 +25,14 @@ export function normalizeDay(date: Date) {
 export function daysInMonth(year: number, month: number) {
   return new Date(year, month, 0).getDate();
 }
+
+/** Saturday + Sunday count in the calendar month (UTC dates). */
+export function weekendDaysInMonth(year: number, month: number) {
+  const dim = daysInMonth(year, month);
+  let count = 0;
+  for (let d = 1; d <= dim; d++) {
+    const dow = new Date(Date.UTC(year, month - 1, d)).getUTCDay();
+    if (dow === 0 || dow === 6) count += 1;
+  }
+  return count;
+}

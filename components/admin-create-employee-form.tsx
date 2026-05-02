@@ -7,7 +7,7 @@ type Props = {
 export function AdminCreateEmployeeForm({ onCreated }: Props) {
   return (
     <form
-      className="grid gap-2 rounded-lg border border-orange-200 bg-white p-4 md:grid-cols-5"
+      className="surface-card grid grid-cols-1 gap-3 rounded-2xl p-4 sm:gap-3 sm:p-5 md:grid-cols-2 md:gap-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-5 xl:gap-3"
       onSubmit={async (e) => {
         e.preventDefault();
         const form = e.currentTarget;
@@ -33,20 +33,20 @@ export function AdminCreateEmployeeForm({ onCreated }: Props) {
         required
         name="name"
         placeholder="Employee name"
-        className="rounded border border-orange-200 px-2 py-2 text-sm"
+        className="input-app w-full min-w-0"
       />
       <input
         required
         name="username"
         placeholder="Username"
-        className="rounded border border-orange-200 px-2 py-2 text-sm"
+        className="input-app w-full min-w-0"
       />
       <input
         required
         name="password"
         placeholder="Password"
         type="password"
-        className="rounded border border-orange-200 px-2 py-2 text-sm"
+        className="input-app w-full min-w-0"
       />
       <input
         required
@@ -54,9 +54,12 @@ export function AdminCreateEmployeeForm({ onCreated }: Props) {
         placeholder="Monthly salary"
         type="number"
         min="1"
-        className="rounded border border-orange-200 px-2 py-2 text-sm"
+        className="input-app w-full min-w-0"
       />
-      <button className="rounded bg-orange-500 px-3 py-2 text-sm text-white hover:bg-orange-600">
+      <button
+        type="submit"
+        className="btn-primary w-full md:col-span-2 lg:col-span-3 xl:col-span-1 xl:w-auto xl:justify-self-start xl:self-end"
+      >
         Create Employee
       </button>
     </form>

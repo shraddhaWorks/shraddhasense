@@ -21,37 +21,32 @@ export default async function Home({
   const session = await getServerSession(authOptions);
 
   return (
-    <main className="mx-auto w-full max-w-5xl p-4 sm:p-6 md:p-10">
-      <h1 className="text-2xl font-semibold text-orange-900">Attendance and Salary Manager</h1>
-      <p className="mt-2 text-sm text-orange-800">
+    <main className="app-main mx-auto w-full min-w-0 max-w-5xl px-4 pb-12 pt-4 sm:px-6 sm:pb-14 sm:pt-6 md:px-8 md:pb-16 md:pt-8 lg:px-10 xl:max-w-6xl xl:px-12 2xl:max-w-7xl">
+      <h1 className="page-heading text-[1.35rem] font-bold leading-tight tracking-tight sm:text-2xl md:text-3xl lg:text-[2rem]">
+        Attendance and Salary Manager
+      </h1>
+      <p className="text-app-muted mt-3 max-w-2xl text-sm leading-relaxed md:text-base">
         Admin can create employee accounts, view attendance, leaves, punch in/out
         locations and monthly salary calculations.
       </p>
 
       {!session?.user && (
-        <section className="mt-8 rounded-lg border border-orange-200 bg-white p-5">
-          <h2 className="text-lg font-medium">Login</h2>
-          <p className="mt-2 text-sm text-orange-800">
-            Create first admin account once using <code>/api/setup-admin</code>.
-          </p>
+        <section className="surface-card mt-6 rounded-2xl p-4 sm:mt-8 sm:p-6">
+          <h2 className="page-heading text-lg font-bold">Login</h2>
           <LoginForm />
         </section>
       )}
 
       {session?.user.role === "ADMIN" && (
-        <section className="mt-8">
-          <p className="mb-2 inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">
-            Admin Portal
-          </p>
+        <section className="mt-8 space-y-4">
+          <p className="badge-app">Admin Portal</p>
           <AdminDashboard userName={session.user.name ?? "Admin"} />
         </section>
       )}
 
       {session?.user.role === "EMPLOYEE" && (
-        <section className="mt-8">
-          <p className="mb-2 inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">
-            Employee Portal
-          </p>
+        <section className="mt-8 space-y-4">
+          <p className="badge-app">Employee Portal</p>
           <EmployeeDashboard userName={session.user.name ?? "Employee"} />
         </section>
       )}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { daysInMonth, requireRole } from "@/lib/server-utils";
+import { daysInMonth, requireRole, weekendDaysInMonth } from "@/lib/server-utils";
 
 export async function GET(request: Request) {
   try {
@@ -32,6 +32,23 @@ export async function GET(request: Request) {
     });
 
     const monthDays = daysInMonth(year, month);
+    const weekendDays = weekendDaysInMonth(year, month);
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const monthLabel = `${monthNames[month - 1]} ${year}`;
+
     const reportRows = employees
       .map((employee) => {
         const fullLeaves = employee.leaves.filter((l) => l.type === "FULL_DAY").length;
@@ -52,10 +69,6 @@ export async function GET(request: Request) {
           baseSalary: Number(employee.monthlySalary),
           leaveDeduction: Number(leaveDeduction.toFixed(2)),
           netSalary: Number(netSalary.toFixed(2)),
-          latestPunchInAt: employee.attendances[0]?.punchInAt ?? null,
-          latestPunchInLocation: employee.attendances[0]?.punchInLocation ?? null,
-          latestPunchOutAt: employee.attendances[0]?.punchOutAt ?? null,
-          latestPunchOutLocation: employee.attendances[0]?.punchOutLocation ?? null,
         };
       })
       .filter((row) => {
@@ -66,6 +79,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       month,
       year,
+      monthLabel,
+      calendarDays: monthDays,
+      weekendDays,
       totalEmployees: reportRows.length,
       rows: reportRows,
     });

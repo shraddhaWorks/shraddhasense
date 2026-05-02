@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Image from "next/image";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,25 +20,28 @@ export const metadata: Metadata = {
   description: "Role based admin and employee attendance app",
 };
 
-export default function RootLayout({
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#09090b",
+};
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions);
+  const isAdmin = session?.user?.role === "ADMIN";
+
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full bg-zinc-950 text-zinc-100 antialiased`}
+      style={{ colorScheme: "dark" }}
     >
-      <body className="min-h-full flex flex-col">
-        <header className="border-b border-orange-200 bg-white">
-          <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 md:px-10">
-            <Image src="/logo.svg" alt="Company logo" width={44} height={44} priority />
-            <p className="text-sm font-semibold text-orange-900">
-              Attendance and Salary Manager
-            </p>
-          </div>
-        </header>
+      <body className="flex min-h-dvh min-w-0 flex-col overflow-x-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
+        <SiteHeader isAdmin={isAdmin} />
         {children}
       </body>
     </html>
