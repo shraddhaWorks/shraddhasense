@@ -12,6 +12,11 @@ const createEmployeeSchema = z.object({
   monthlySalary: z.number().positive(),
 });
 
+const updateEmployeeSalarySchema = z.object({
+  employeeId: z.string().min(1),
+  monthlySalary: z.coerce.number().positive(),
+});
+
 export async function GET() {
   try {
     const admin = await requireRole(Role.ADMIN);
@@ -27,6 +32,49 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ employees });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    const status = message === "Unauthorized" ? 401 : 403;
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const admin = await requireRole(Role.ADMIN);
+    const payload = await request.json();
+    const parsed = updateEmployeeSalarySchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const employee = await prisma.user.findFirst({
+      where: {
+        id: parsed.data.employeeId,
+        adminId: admin.id,
+        role: Role.EMPLOYEE,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!employee) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+
+    const updatedEmployee = await prisma.user.update({
+      where: { id: employee.id },
+      data: { monthlySalary: parsed.data.monthlySalary },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        monthlySalary: true,
+      },
+    });
+
+    return NextResponse.json({ employee: updatedEmployee });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const status = message === "Unauthorized" ? 401 : 403;

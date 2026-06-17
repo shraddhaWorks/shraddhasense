@@ -16,13 +16,12 @@ type OverviewEmployee = {
 };
 
 type AttendanceRecord = {
+  workDuration: number | null;
   id: string;
   employeeName: string;
   username: string;
   punchInAt: string;
-  punchInLocation: string;
   punchOutAt: string | null;
-  punchOutLocation: string | null;
 };
 
 const ADMIN_NAV_CARDS = [
@@ -54,6 +53,25 @@ export function AdminDashboard({ userName }: { userName: string }) {
     new Date().toISOString().slice(0, 10)
   );
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+
+  function formatWorkDuration(minutes: number | null) {
+    if (minutes === null || minutes <= 0) {
+      return "-";
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (hours === 0) {
+      return `${mins} min`;
+    }
+
+    if (mins === 0) {
+      return `${hours} hr`;
+    }
+
+    return `${hours} hr ${mins} min`;
+  }
 
   async function loadOverview() {
     const res = await fetch("/api/admin/overview", { cache: "no-store" });
@@ -141,7 +159,7 @@ export function AdminDashboard({ userName }: { userName: string }) {
             className="input-app w-full min-w-0 sm:max-w-[14rem] sm:shrink-0"
           />
         </div>
-        <p className="text-app-muted mb-3 text-xs sm:text-sm">Punch times and locations for the selected date.</p>
+        <p className="text-app-muted mb-3 text-xs sm:text-sm">Punch times for the selected date.</p>
 
         <div className="lg:hidden">
           {attendanceRecords.length === 0 ? (
@@ -165,7 +183,6 @@ export function AdminDashboard({ userName }: { userName: string }) {
                       <dd className="mt-0.5 text-zinc-200">
                         {new Date(record.punchInAt).toLocaleTimeString()}
                       </dd>
-                      <dd className="break-words text-xs text-zinc-400">{record.punchInLocation}</dd>
                     </div>
                     <div>
                       <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">Punch out</dt>
@@ -173,9 +190,6 @@ export function AdminDashboard({ userName }: { userName: string }) {
                         {record.punchOutAt
                           ? new Date(record.punchOutAt).toLocaleTimeString()
                           : "—"}
-                      </dd>
-                      <dd className="break-words text-xs text-zinc-400">
-                        {record.punchOutLocation ?? "—"}
                       </dd>
                     </div>
                   </dl>
@@ -192,9 +206,8 @@ export function AdminDashboard({ userName }: { userName: string }) {
                 <tr>
                   <th className="px-3 py-3 whitespace-nowrap">Employee</th>
                   <th className="px-3 py-3">Punch In Time</th>
-                  <th className="px-3 py-3">Punch In Location</th>
                   <th className="px-3 py-3">Punch Out Time</th>
-                  <th className="px-3 py-3">Punch Out Location</th>
+                  <th className="px-3 py-3">Work Duration</th>
                 </tr>
               </thead>
               <tbody className="text-zinc-300">
@@ -213,14 +226,13 @@ export function AdminDashboard({ userName }: { userName: string }) {
                       <td className="px-3 py-2.5">
                         {new Date(record.punchInAt).toLocaleTimeString()}
                       </td>
-                      <td className="max-w-[12rem] break-words px-3 py-2.5">{record.punchInLocation}</td>
                       <td className="px-3 py-2.5">
                         {record.punchOutAt
                           ? new Date(record.punchOutAt).toLocaleTimeString()
                           : "-"}
                       </td>
-                      <td className="max-w-[12rem] break-words px-3 py-2.5">
-                        {record.punchOutLocation ?? "-"}
+                      <td className="px-3 py-2.5">
+                        {formatWorkDuration(record.workDuration)}
                       </td>
                     </tr>
                   ))

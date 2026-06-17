@@ -43,9 +43,10 @@ export async function GET(request: Request) {
         employeeName: a.user.name,
         username: a.user.username,
         punchInAt: a.punchInAt,
-        punchInLocation: a.punchInLocation,
         punchOutAt: a.punchOutAt,
-        punchOutLocation: a.punchOutLocation,
+        workDuration: a.punchOutAt && a.punchInAt
+          ? Math.round((a.punchOutAt.getTime() - a.punchInAt.getTime()) / (1000 * 60))
+          : null,
       })),
     });
   } catch (error) {

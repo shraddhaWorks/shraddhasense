@@ -21,6 +21,19 @@ function calculateStreak(dates: Date[]) {
   return streak;
 }
 
+function getMinutes(date: Date) {
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+function getDayType(attendance: { punchInAt: Date; punchOutAt: Date | null }) {
+  if (!attendance.punchOutAt) return null;
+  const punchInMinutes = getMinutes(attendance.punchInAt);
+  const punchOutMinutes = getMinutes(attendance.punchOutAt);
+  const isFullDayPunchIn = punchInMinutes >= 9 * 60 && punchInMinutes <= 11 * 60;
+  const isFullDayPunchOut = punchOutMinutes >= 18 * 60 && punchOutMinutes <= 20 * 60;
+  return isFullDayPunchIn && isFullDayPunchOut ? "FULL_DAY" : "HALF_DAY";
+}
+
 export async function GET(request: Request) {
   try {
     const user = await requireRole(Role.EMPLOYEE);
@@ -50,6 +63,13 @@ export async function GET(request: Request) {
       select: { monthlySalary: true },
     });
 
+    const todayAttendanceWithType = todayAttendance
+      ? {
+          ...todayAttendance,
+          dayType: getDayType(todayAttendance),
+        }
+      : null;
+
     const fullLeaves = leaves.filter((l) => l.type === "FULL_DAY").length;
     const halfLeaves = leaves.filter((l) => l.type === "HALF_DAY").length;
     const leaveDays = fullLeaves + halfLeaves * 0.5;
@@ -76,7 +96,7 @@ export async function GET(request: Request) {
         start: "10:00 AM",
         end: "6:30 PM",
       },
-      todayAttendance,
+      todayAttendance: todayAttendanceWithType,
       attendances,
     });
   } catch (error) {
