@@ -12,19 +12,32 @@ type Summary = {
   todayAttendance: {
     punchInAt: string;
     punchOutAt: string | null;
+    dayType: "FULL_DAY" | "HALF_DAY" | null;
   } | null;
 };
 
 export function EmployeeDashboard({ userName }: { userName: string }) {
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [locError, setLocError] = useState<string | null>(null);
-  const [locLoading, setLocLoading] = useState(false);
 
   async function loadSummary() {
     const res = await fetch("/api/employee/summary", { cache: "no-store" });
     if (!res.ok) return;
     setSummary(await res.json());
+  }
+
+  async function autoPunchOut() {
+    if (
+      summary?.todayAttendance &&
+      !summary.todayAttendance.punchOutAt &&
+      new Date().getHours() >= 20
+    ) {
+      await fetch("/api/employee/punch", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      await loadSummary();
+    }
   }
 
   useEffect(() => {
@@ -34,69 +47,24 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
     return () => clearTimeout(timer);
   }, []);
 
-  function detectLocation() {
-    return new Promise<{ lat: number; lng: number } | null>((resolve) => {
-      if (!navigator.geolocation) {
-        setLocError("Geolocation is not supported in this browser.");
-        resolve(null);
-        return;
-      }
-
-      setLocLoading(true);
-      setLocError(null);
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const found = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          setCoords(found);
-          setLocLoading(false);
-          resolve(found);
-        },
-        (error) => {
-          setLocLoading(false);
-          setLocError(error.message || "Unable to fetch current location.");
-          resolve(null);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-      );
-    });
-  }
-
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void detectLocation();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!summary) return;
+    if (
+      summary.todayAttendance &&
+      !summary.todayAttendance.punchOutAt &&
+      new Date().getHours() >= 20
+    ) {
+      void autoPunchOut();
+    }
+  }, [summary]);
 
-  const canPunchIn = !summary?.todayAttendance;
+  const now = new Date();
+  const canPunchIn = Boolean(
+    !summary?.todayAttendance &&
+      now.getHours() >= 9 &&
+      now.getHours() < 20
+  );
   const canPunchOut = Boolean(summary?.todayAttendance && !summary.todayAttendance.punchOutAt);
-  const officeCenter = { lat: 14.650522, lng: 77.607849 };
-  const officeRadiusKm = 3;
-
-  function toRad(value: number) {
-    return (value * Math.PI) / 180;
-  }
-
-  function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-    const earthRadiusKm = 6371;
-    const dLat = toRad(b.lat - a.lat);
-    const dLng = toRad(b.lng - a.lng);
-    const lat1 = toRad(a.lat);
-    const lat2 = toRad(b.lat);
-
-    const hav =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.sin(dLng / 2) * Math.sin(dLng / 2) * Math.cos(lat1) * Math.cos(lat2);
-
-    return 2 * earthRadiusKm * Math.asin(Math.sqrt(hav));
-  }
-
-  const currentDistanceKm = coords ? distanceKm(coords, officeCenter) : null;
-  const inOfficeArea = currentDistanceKm !== null && currentDistanceKm <= officeRadiusKm;
 
   async function requestLeave(type: "HALF_DAY" | "FULL_DAY") {
     const reason = window.prompt("Enter leave reason");
@@ -138,31 +106,17 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
       </div>
 
       <div className="mx-auto grid w-full max-w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-3 xl:max-w-4xl">
-        <button
-          type="button"
-          className="btn-outline min-h-12 w-full px-4 py-2.5 text-sm sm:text-base"
-          onClick={async () => {
-            await detectLocation();
-          }}
-        >
-          {locLoading ? "Detecting location…" : "Refresh location"}
-        </button>
         {canPunchIn ? (
           <button
             type="button"
             className="btn-primary min-h-12 w-full px-4 py-2.5 text-sm sm:text-base"
             onClick={async () => {
-              const liveCoords = coords ?? (await detectLocation());
-              if (!liveCoords) return;
-
               await fetch("/api/employee/punch", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  location: `${liveCoords.lat.toFixed(6)}, ${liveCoords.lng.toFixed(6)}`,
-                }),
+                body: JSON.stringify({}),
               });
-              loadSummary();
+              await loadSummary();
             }}
           >
             Punch In
@@ -173,17 +127,12 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
             type="button"
             className="btn-outline min-h-12 w-full px-4 py-2.5 text-sm sm:text-base"
             onClick={async () => {
-              const liveCoords = coords ?? (await detectLocation());
-              if (!liveCoords) return;
-
               await fetch("/api/employee/punch", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  location: `${liveCoords.lat.toFixed(6)}, ${liveCoords.lng.toFixed(6)}`,
-                }),
+                body: JSON.stringify({}),
               });
-              loadSummary();
+              await loadSummary();
             }}
           >
             Punch Out
@@ -224,37 +173,14 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
         ) : (
           <p className="text-app-muted mt-2 text-sm">Today: not punched in yet.</p>
         )}
-        {coords ? (
-          <>
-            <p className="mt-3 break-all text-sm text-zinc-400">
-              <span className="text-zinc-500">Lat</span> {coords.lat.toFixed(6)}{" "}
-              <span className="text-zinc-500">· Lng</span> {coords.lng.toFixed(6)}
-            </p>
-            <p className="mt-2 break-words text-xs text-zinc-500 sm:text-sm">
-              Office: {officeCenter.lat.toFixed(4)}, {officeCenter.lng.toFixed(4)} · Radius{" "}
-              {officeRadiusKm} km
-            </p>
-            <p
-              className={`mt-2 text-sm font-medium ${
-                inOfficeArea ? "text-orange-400" : "text-zinc-200"
-              }`}
-            >
-              {inOfficeArea
-                ? `Inside office area (${currentDistanceKm?.toFixed(2)} km)`
-                : `Outside office area (${currentDistanceKm?.toFixed(2)} km)`}
-            </p>
-            <iframe
-              title="Current location map"
-              className="mt-4 aspect-[16/10] w-full max-h-[min(18rem,50vh)] rounded-2xl border border-zinc-700 shadow-lg transition-all duration-300 hover:border-orange-500/50 sm:max-h-72"
-              src={`https://maps.google.com/maps?q=${coords.lat},${coords.lng}&z=15&output=embed`}
-            />
-          </>
-        ) : (
-          <p className="text-app-muted mt-3 text-sm">
-            {locLoading ? "Detecting current location…" : "Location not available yet."}
+        <p className="text-app-muted mt-3 text-sm">
+          Punch in is allowed from 9:00 AM to 8:00 PM.
+        </p>
+        {summary?.todayAttendance?.dayType ? (
+          <p className="mt-2 text-sm font-medium text-orange-400">
+            Today: {summary.todayAttendance.dayType === "FULL_DAY" ? "Full day" : "Half day"}
           </p>
-        )}
-        {locError ? <p className="mt-3 text-sm font-medium text-orange-400">{locError}</p> : null}
+        ) : null}
       </div>
 
       {summary && (
