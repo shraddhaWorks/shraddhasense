@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
+import { EmployeeLeaveRequestForm } from "@/components/employee-leave-request-form";
+import { EmployeeLeavesList } from "@/components/employee-leaves-list";
 
 type Summary = {
   attendanceCount: number;
   streak: number;
   salary: { base: number; deduction: number; net: number };
-  leaves: { fullDay: number; halfDay: number };
+  leaves: { fullDay: number; halfDay: number; pending: number; rejected: number };
+  attendance: { fullDays: number; halfDays: number };
+  absents: number;
+  holidays: number;
   shift: { start: string; end: string };
   todayAttendance: {
     punchInAt: string;
@@ -16,13 +21,38 @@ type Summary = {
   } | null;
 };
 
+type Holiday = {
+  id: string;
+  date: string;
+  type: string;
+  note?: string;
+};
+
 export function EmployeeDashboard({ userName }: { userName: string }) {
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [todayHoliday, setTodayHoliday] = useState<Holiday | null>(null);
+  const [holidayWarning, setHolidayWarning] = useState<string | null>(null);
 
   async function loadSummary() {
     const res = await fetch("/api/employee/summary", { cache: "no-store" });
     if (!res.ok) return;
     setSummary(await res.json());
+  }
+
+  async function loadTodayHoliday() {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const res = await fetch(`/api/employee/holidays?date=${new Date(today).toISOString()}`, {
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTodayHoliday(data.holiday);
+      }
+    } catch (err) {
+      console.error("Failed to load holiday:", err);
+    }
   }
 
   async function autoPunchOut() {
@@ -43,9 +73,10 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       void loadSummary();
+      void loadTodayHoliday();
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [refreshTrigger]);
 
   useEffect(() => {
     if (!summary) return;
@@ -87,7 +118,8 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
         note: reason.trim(),
       }),
     });
-    loadSummary();
+    setRefreshTrigger((prev) => prev + 1);
+    await loadSummary();
   }
 
   return (
@@ -106,16 +138,29 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
       </div>
 
       <div className="mx-auto grid w-full max-w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-3 xl:max-w-4xl">
+        {todayHoliday && (
+          <div className="col-span-full rounded-lg border-2 border-orange-500/50 bg-orange-900/20 p-3 text-center text-sm font-medium text-orange-300">
+            🎉 Today is a {todayHoliday.type.replace(/_/g, " ")}
+            {todayHoliday.note && ` - ${todayHoliday.note}`}
+          </div>
+        )}
         {canPunchIn ? (
           <button
             type="button"
-            className="btn-primary min-h-12 w-full px-4 py-2.5 text-sm sm:text-base"
+            className={`min-h-12 w-full px-4 py-2.5 text-sm sm:text-base ${
+              todayHoliday ? "btn-outline" : "btn-primary"
+            }`}
             onClick={async () => {
-              await fetch("/api/employee/punch", {
+              const res = await fetch("/api/employee/punch", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({}),
               });
+              const data = await res.json();
+              if (data.warning) {
+                setHolidayWarning(data.warning);
+                setTimeout(() => setHolidayWarning(null), 5000);
+              }
               await loadSummary();
             }}
           >
@@ -156,6 +201,7 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
         >
           Full-day leave
         </button>
+        <EmployeeLeaveRequestForm onSuccess={() => setRefreshTrigger((prev) => prev + 1)} />
       </div>
 
       <div className="surface-card rounded-2xl p-4 sm:p-5">
@@ -185,29 +231,66 @@ export function EmployeeDashboard({ userName }: { userName: string }) {
 
       {summary && (
         <div className="surface-card space-y-2 rounded-2xl p-4 text-sm text-zinc-400 sm:p-5 sm:text-base">
+          <p className="text-lg font-semibold text-zinc-100 mb-4">Summary</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p>
+                Attendance days: <span className="text-zinc-100 font-medium">{summary.attendanceCount}</span>
+              </p>
+              <p className="mt-2">
+                Streak: <span className="text-zinc-100 font-medium">{summary.streak}</span>
+              </p>
+            </div>
+            <div>
+              <p>
+                Full-day attendance: <span className="text-zinc-100 font-medium">{summary.attendance.fullDays}</span>
+              </p>
+              <p className="mt-2">
+                Half-day attendance: <span className="text-zinc-100 font-medium">{summary.attendance.halfDays}</span>
+              </p>
+            </div>
+            <div>
+              <p>
+                Approved leaves (full): <span className="text-green-400 font-medium">{summary.leaves.fullDay}</span>
+              </p>
+              <p className="mt-2">
+                Approved leaves (half): <span className="text-green-400 font-medium">{summary.leaves.halfDay}</span>
+              </p>
+            </div>
+            <div>
+              <p>
+                Pending requests: <span className="text-blue-400 font-medium">{summary.leaves.pending}</span>
+              </p>
+              <p className="mt-2">
+                Rejected: <span className="text-red-400 font-medium">{summary.leaves.rejected}</span>
+              </p>
+            </div>
+          </div>
+
+          <hr className="border-zinc-700 my-4" />
+
           <p>
-            Attendance days: <span className="text-zinc-100">{summary.attendanceCount}</span>
+            Holidays (this month): <span className="text-blue-400 font-medium">{summary.holidays}</span>
+          </p>
+          <p className="mt-2">
+            Absents: <span className="text-orange-300/90 font-medium">{summary.absents}</span>
+          </p>
+          <p className="mt-2">
+            Salary base: <span className="text-zinc-100 font-medium">{summary.salary.base}</span>
           </p>
           <p>
-            Streak: <span className="text-zinc-100">{summary.streak}</span>
-          </p>
-          <p>
-            Leaves (full/half):{" "}
-            <span className="text-zinc-100">
-              {summary.leaves.fullDay}/{summary.leaves.halfDay}
-            </span>
-          </p>
-          <p>
-            Salary base: <span className="text-zinc-100">{summary.salary.base}</span>
-          </p>
-          <p>
-            Deduction: <span className="text-orange-300/90">{summary.salary.deduction}</span>
+            Deduction: <span className="text-orange-300/90 font-medium">{summary.salary.deduction}</span>
           </p>
           <p>
             Net: <span className="text-lg font-semibold text-orange-400">{summary.salary.net}</span>
           </p>
         </div>
       )}
+
+      <div className="surface-card rounded-2xl p-4 sm:p-5">
+        <p className="text-base font-semibold text-zinc-100 sm:text-lg mb-4">Your Leave Requests</p>
+        <EmployeeLeavesList />
+      </div>
     </div>
   );
 }

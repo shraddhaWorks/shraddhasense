@@ -22,6 +22,18 @@ enum LeaveType {
   FULL_DAY
 }
 
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum HolidayType {
+  PUBLIC_HOLIDAY
+  COMPANY_HOLIDAY
+  PERSONAL_HOLIDAY
+}
+
 model User {
   id            String          @id @default(cuid())
   name          String
@@ -32,6 +44,7 @@ model User {
   adminId       String?
   admin         User?           @relation("AdminEmployees", fields: [adminId], references: [id])
   employees     User[]          @relation("AdminEmployees")
+  holidays      Holiday[]       @relation("AdminHolidays")
   sessions      Session[]
   accounts      Account[]
   attendances   Attendance[]
@@ -58,13 +71,30 @@ model Attendance {
 }
 
 model Leave {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  leaveDate DateTime
-  type      LeaveType
-  note      String?
-  createdAt DateTime  @default(now())
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaveDate    DateTime
+  type         LeaveType
+  status       LeaveStatus @default(PENDING)
+  note         String?
+  adminReason  String?
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now())
+}
+
+model Holiday {
+  id       String      @id @default(cuid())
+  adminId  String
+  admin    User        @relation("AdminHolidays", fields: [adminId], references: [id], onDelete: Cascade)
+  date     DateTime
+  type     HolidayType
+  note     String?
+  createdAt DateTime   @default(now())
+
+  @@unique([adminId, date])
 }
 
 model SalaryCredit {

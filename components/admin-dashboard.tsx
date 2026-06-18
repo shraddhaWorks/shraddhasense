@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { AdminCreateEmployeeForm } from "@/components/admin-create-employee-form";
+import { AdminLeaveRequestsTable } from "@/components/admin-leave-requests-table";
+import { AdminHolidayManagement } from "@/components/admin-holiday-management";
 
 type OverviewEmployee = {
   id: string;
@@ -11,7 +13,9 @@ type OverviewEmployee = {
   username: string;
   monthlySalary: number;
   attendanceCount: number;
-  leaves: { fullDay: number; halfDay: number; totalLeaveDays: number };
+  attendance: { fullDays: number; halfDays: number };
+  leaves: { fullDay: number; halfDay: number; totalLeaveDays: number; pending: number; rejected: number };
+  absents: number;
   salary: { calculatedNet: number; creditedAmount: number };
 };
 
@@ -148,6 +152,17 @@ export function AdminDashboard({ userName }: { userName: string }) {
       <AdminCreateEmployeeForm onCreated={() => void loadOverview()} />
 
       <div className="surface-card rounded-2xl p-4 sm:p-5">
+        <p className="text-base font-semibold leading-snug text-zinc-100 sm:text-lg mb-4">
+          Leave Requests
+        </p>
+        <AdminLeaveRequestsTable refreshTrigger={0} />
+      </div>
+
+      <div className="surface-card rounded-2xl p-4 sm:p-5">
+        <AdminHolidayManagement />
+      </div>
+
+      <div className="surface-card rounded-2xl p-4 sm:p-5">
         <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-base font-semibold leading-snug text-zinc-100 sm:text-lg">
             Date-wise attendance
@@ -250,13 +265,22 @@ export function AdminDashboard({ userName }: { userName: string }) {
               {emp.name}{" "}
               <span className="text-sm font-normal text-zinc-500">({emp.username})</span>
             </p>
-            <p className="mt-2 text-sm text-zinc-400">Attendance days: {emp.attendanceCount}</p>
-            <p className="text-sm text-zinc-400">
-              Leaves (full/half): {emp.leaves.fullDay}/{emp.leaves.halfDay}
-            </p>
-            <p className="text-sm text-zinc-400">
-              Salary base / net: {emp.monthlySalary} / {emp.salary.calculatedNet}
-            </p>
+            <div className="mt-3 space-y-1.5 text-sm text-zinc-400">
+              <p>Attendance: {emp.attendanceCount} days</p>
+              <p className="text-xs text-zinc-500">
+                Full: {emp.attendance.fullDays} | Half: {emp.attendance.halfDays}
+              </p>
+              <p>
+                Approved leaves: {emp.leaves.fullDay}/{emp.leaves.halfDay}
+              </p>
+              <p className="text-xs text-zinc-500">
+                Pending: {emp.leaves.pending} | Rejected: {emp.leaves.rejected}
+              </p>
+              <p className="text-orange-300">Absents: {emp.absents}</p>
+              <p>
+                Salary: {emp.monthlySalary} → {emp.salary.calculatedNet}
+              </p>
+            </div>
           </div>
         ))}
       </div>

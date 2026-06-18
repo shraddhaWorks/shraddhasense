@@ -45,7 +45,12 @@ export async function GET(request: Request) {
     const nextMonthStart = new Date(Date.UTC(year, month, 1));
     const today = normalizeDay(new Date());
 
-    const [attendances, leaves, todayAttendance] = await Promise.all([
+    const userRecord = await prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+      select: { monthlySalary: true, adminId: true },
+    });
+
+    const [attendances, leaves, todayAttendance, holidays] = await Promise.all([
       prisma.attendance.findMany({
         where: { userId: user.id, workDate: { gte: monthStart, lt: nextMonthStart } },
         orderBy: { workDate: "desc" },
@@ -56,12 +61,15 @@ export async function GET(request: Request) {
       prisma.attendance.findUnique({
         where: { userId_workDate: { userId: user.id, workDate: today } },
       }),
+      userRecord.adminId
+        ? prisma.holiday.findMany({
+            where: {
+              adminId: userRecord.adminId,
+              date: { gte: monthStart, lt: nextMonthStart },
+            },
+          })
+        : Promise.resolve([]),
     ]);
-
-    const userRecord = await prisma.user.findUniqueOrThrow({
-      where: { id: user.id },
-      select: { monthlySalary: true },
-    });
 
     const todayAttendanceWithType = todayAttendance
       ? {
@@ -70,9 +78,38 @@ export async function GET(request: Request) {
         }
       : null;
 
-    const fullLeaves = leaves.filter((l) => l.type === "FULL_DAY").length;
-    const halfLeaves = leaves.filter((l) => l.type === "HALF_DAY").length;
-    const leaveDays = fullLeaves + halfLeaves * 0.5;
+    // Separate full day and half day leaves (only approved)
+    const approvedLeaves = leaves.filter((l) => l.status === "APPROVED");
+    const approvedFullLeaves = approvedLeaves.filter((l) => l.type === "FULL_DAY").length;
+    const approvedHalfLeaves = approvedLeaves.filter((l) => l.type === "HALF_DAY").length;
+
+    // Count full days and half days from attendance
+    const fullDayAttendances = attendances.filter((a) => getDayType(a) === "FULL_DAY").length;
+    const halfDayAttendances = attendances.filter((a) => getDayType(a) === "HALF_DAY").length;
+
+    // Calculate total working days in month (excluding weekends)
+    const totalDaysInMonth = daysInMonth(year, month);
+    let workingDaysInMonth = 0;
+    for (let d = 1; d <= totalDaysInMonth; d++) {
+      const dayOfWeek = new Date(Date.UTC(year, month - 1, d)).getUTCDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        workingDaysInMonth++;
+      }
+    }
+
+    // Count holidays
+    const holidayDays = holidays.length;
+
+    // Calculate absents (working days - attended days - approved leave days - holidays)
+    const attendedDays = fullDayAttendances + halfDayAttendances * 0.5;
+    const approveLeaveDays = approvedFullLeaves + approvedHalfLeaves * 0.5;
+    const absentDays = Math.max(
+      0,
+      workingDaysInMonth - attendedDays - approveLeaveDays - holidayDays
+    );
+
+    // Calculate salary deduction (based on approved leaves + absents, NOT holidays)
+    const leaveDays = approveLeaveDays + absentDays;
     const perDay = Number(userRecord.monthlySalary) / daysInMonth(year, month);
     const deduction = perDay * leaveDays;
     const netSalary = Math.max(0, Number((Number(userRecord.monthlySalary) - deduction).toFixed(2)));
@@ -89,9 +126,17 @@ export async function GET(request: Request) {
         net: netSalary,
       },
       leaves: {
-        fullDay: fullLeaves,
-        halfDay: halfLeaves,
+        fullDay: approvedFullLeaves,
+        halfDay: approvedHalfLeaves,
+        pending: leaves.filter((l) => l.status === "PENDING").length,
+        rejected: leaves.filter((l) => l.status === "REJECTED").length,
       },
+      attendance: {
+        fullDays: fullDayAttendances,
+        halfDays: halfDayAttendances,
+      },
+      absents: Math.round(absentDays * 100) / 100,
+      holidays: holidayDays,
       shift: {
         start: "10:00 AM",
         end: "6:30 PM",
