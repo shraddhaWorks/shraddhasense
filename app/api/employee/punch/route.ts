@@ -51,6 +51,44 @@ export async function POST(request: Request) {
     }
 
     const today = normalizeDay(new Date());
+
+    // Check if there's an approved leave for today
+    const approvedLeave = await prisma.leave.findFirst({
+      where: {
+        userId: user.id,
+        leaveDate: today,
+        status: "APPROVED",
+      },
+    });
+
+    if (approvedLeave) {
+      return NextResponse.json(
+        { error: "Cannot punch in on an approved leave day." },
+        { status: 409 }
+      );
+    }
+
+    // Get employee's admin and check for holiday
+    const employee = await prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+      select: { adminId: true },
+    });
+
+    let holidayWarning = null;
+    if (employee.adminId) {
+      const holiday = await prisma.holiday.findUnique({
+        where: {
+          adminId_date: {
+            adminId: employee.adminId,
+            date: today,
+          },
+        },
+      });
+      if (holiday) {
+        holidayWarning = `Today is a ${holiday.type.replace(/_/g, " ")}${holiday.note ? `: ${holiday.note}` : ""}`;
+      }
+    }
+
     const existing = await prisma.attendance.findUnique({
       where: { userId_workDate: { userId: user.id, workDate: today } },
     });
@@ -69,7 +107,10 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ attendance }, { status: 201 });
+    return NextResponse.json(
+      { attendance, warning: holidayWarning },
+      { status: 201 }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const status = message === "Unauthorized" ? 401 : 403;

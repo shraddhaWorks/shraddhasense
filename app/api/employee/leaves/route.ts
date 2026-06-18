@@ -34,12 +34,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
+    // Check if leave already exists for this date
+    const existingLeave = await prisma.leave.findFirst({
+      where: {
+        userId: user.id,
+        leaveDate: normalizeDay(new Date(parsed.data.leaveDate)),
+      },
+    });
+
+    if (existingLeave) {
+      return NextResponse.json(
+        { error: "Leave already requested for this date" },
+        { status: 409 }
+      );
+    }
+
     const leave = await prisma.leave.create({
       data: {
         userId: user.id,
         leaveDate: normalizeDay(new Date(parsed.data.leaveDate)),
         type: parsed.data.type,
         note: parsed.data.note,
+        status: "PENDING",
       },
     });
     return NextResponse.json({ leave }, { status: 201 });
