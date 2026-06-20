@@ -111,10 +111,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(
-      { attendance, warning: holidayWarning },
-      { status: 201 }
-    );
+    return NextResponse.json({ attendance }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const status = message === "Unauthorized" ? 401 : 403;
