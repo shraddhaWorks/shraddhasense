@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { daysInMonth, requireRole } from "@/lib/server-utils";
+import { importPublicHolidaysForAdmin } from "@/lib/holidays";
 
 function getDayType(attendance: { punchInAt: Date; punchOutAt: Date | null }) {
   if (!attendance.punchOutAt) return null;
@@ -21,6 +22,9 @@ export async function GET(request: Request) {
 
     const monthStart = new Date(Date.UTC(year, month - 1, 1));
     const nextMonthStart = new Date(Date.UTC(year, month, 1));
+
+    // ensure public holidays for this admin/year are imported before report
+    await importPublicHolidaysForAdmin(admin.id, monthStart.getUTCFullYear());
 
     const [employees, holidays] = await Promise.all([
       prisma.user.findMany({

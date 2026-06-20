@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizeDay, requireRole } from "@/lib/server-utils";
+import { importPublicHolidaysForAdmin } from "@/lib/holidays";
 
 export async function GET(request: Request) {
   try {
@@ -24,6 +25,9 @@ export async function GET(request: Request) {
     if (!employee.adminId) {
       return NextResponse.json({ holiday: null });
     }
+
+    // ensure public holidays are imported for this admin/year
+    await importPublicHolidaysForAdmin(employee.adminId, checkDate.getUTCFullYear());
 
     const holiday = await prisma.holiday.findUnique({
       where: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Loader from "@/components/loader";
 
 type Holiday = {
   id: string;
@@ -145,7 +146,9 @@ export function AdminHolidayManagement() {
       </div>
 
       {isLoading ? (
-        <div className="text-center text-zinc-400">Loading holidays...</div>
+        <div className="text-center text-zinc-400">
+          <Loader text="Loading holidays..." />
+        </div>
       ) : holidays.length === 0 ? (
         <div className="rounded border border-dashed border-zinc-700 bg-zinc-900/40 px-4 py-6 text-center text-sm text-zinc-400">
           No holidays for this month

@@ -10,7 +10,8 @@ export function EmployeeLeaveRequestForm({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [leaveType, setLeaveType] = useState<"FULL_DAY" | "HALF_DAY">("FULL_DAY");
-  const [leaveDate, setLeaveDate] = useState(new Date().toISOString().split("T")[0]);
+  const [leaveStartDate, setLeaveStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [leaveEndDate, setLeaveEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
 
@@ -23,13 +24,26 @@ export function EmployeeLeaveRequestForm({
       return;
     }
 
+    const start = new Date(leaveStartDate);
+    const end = new Date(leaveEndDate);
+    if (end < start) {
+      setError("End date cannot be earlier than start date.");
+      return;
+    }
+
+    if (leaveType === "HALF_DAY" && leaveStartDate !== leaveEndDate) {
+      setError("Half-day leave can only be requested for a single date.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await fetch("/api/employee/leaves", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          leaveDate: new Date(leaveDate).toISOString(),
+          startDate: new Date(leaveStartDate).toISOString(),
+          endDate: new Date(leaveEndDate).toISOString(),
           type: leaveType,
           note: reason.trim(),
         }),
@@ -42,7 +56,8 @@ export function EmployeeLeaveRequestForm({
 
       setIsOpen(false);
       setReason("");
-      setLeaveDate(new Date().toISOString().split("T")[0]);
+      setLeaveStartDate(new Date().toISOString().split("T")[0]);
+      setLeaveEndDate(new Date().toISOString().split("T")[0]);
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -66,18 +81,34 @@ export function EmployeeLeaveRequestForm({
           <div className="surface-card w-full max-w-md rounded-2xl p-6 sm:p-8">
             <h3 className="text-xl font-bold text-zinc-100">Request Leave</h3>
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              <div>
-                <label htmlFor="date" className="block text-sm font-medium text-zinc-400">
-                  Leave Date
-                </label>
-                <input
-                  id="date"
-                  type="date"
-                  value={leaveDate}
-                  onChange={(e) => setLeaveDate(e.target.value)}
-                  className="mt-1 w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100"
-                  required
-                />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="startDate" className="block text-sm font-medium text-zinc-400">
+                    Start Date
+                  </label>
+                  <input
+                    id="startDate"
+                    type="date"
+                    value={leaveStartDate}
+                    onChange={(e) => setLeaveStartDate(e.target.value)}
+                    className="mt-1 w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="endDate" className="block text-sm font-medium text-zinc-400">
+                    End Date
+                  </label>
+                  <input
+                    id="endDate"
+                    type="date"
+                    value={leaveEndDate}
+                    onChange={(e) => setLeaveEndDate(e.target.value)}
+                    className="mt-1 w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100"
+                    required
+                  />
+                </div>
               </div>
 
               <div>
