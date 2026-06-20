@@ -74,7 +74,6 @@ export async function POST(request: Request) {
       select: { adminId: true },
     });
 
-    let holidayWarning = null;
     if (employee.adminId) {
       const holiday = await prisma.holiday.findUnique({
         where: {
@@ -85,7 +84,12 @@ export async function POST(request: Request) {
         },
       });
       if (holiday) {
-        holidayWarning = `Today is a ${holiday.type.replace(/_/g, " ")}${holiday.note ? `: ${holiday.note}` : ""}`;
+        return NextResponse.json(
+          {
+            error: `Cannot punch in on a holiday: ${holiday.type.replace(/_/g, " ")}${holiday.note ? ` - ${holiday.note}` : ""}`,
+          },
+          { status: 409 }
+        );
       }
     }
 

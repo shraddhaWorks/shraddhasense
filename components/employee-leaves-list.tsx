@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Loader from "@/components/loader";
 
 type Leave = {
   id: string;
@@ -42,7 +43,11 @@ export function EmployeeLeavesList() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-zinc-400">Loading leaves...</div>;
+    return (
+      <div className="text-center text-zinc-400">
+        <Loader text="Loading leave requests..." />
+      </div>
+    );
   }
 
   if (leaves.length === 0) {

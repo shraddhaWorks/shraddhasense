@@ -101,9 +101,9 @@ export function AdminLeaveRequestsTable({
         </button>
         <button
           onClick={() => setFilter("PENDING")}
-          className={`px-4 py-2 rounded text-sm font-medium ${
+          className={`px-4 py-2 rounded text-sm font-medium  ${
             filter === "PENDING"
-              ? "bg-blue-600 text-white"
+              ? "bg-yellow-600 text-white"
               : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
           }`}
         >
